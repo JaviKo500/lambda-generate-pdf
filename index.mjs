@@ -5,9 +5,8 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
 export const handler = async (event) => {
-  const { html, fileName, orderId } = event;
+  const { html, fileName, orderId, bucketName } = event;
 
-  console.log('Generating PDF for orderId:', orderId);
   let browser;
   let s3Key = null;
   let page;
@@ -32,14 +31,11 @@ export const handler = async (event) => {
       printBackground: true,
     });
 
-    // todo: get bucket name by country
-    s3Key = `giftcards/${orderId}/${fileName}`;
+    s3Key = `gift_cards/${orderId}/${fileName}`;
 
-    console.log('<--------------- JK Index --------------->');
-    console.log(s3Key);
     await s3.send(
       new PutObjectCommand({
-        Bucket: process.env.PDF_BUCKET,
+        Bucket: bucketName ?? process.env.PDF_BUCKET,
         Key: s3Key,
         Body: pdfBuffer,
         ContentType: 'application/pdf',
@@ -52,8 +48,8 @@ export const handler = async (event) => {
       error: null,
     };
   } catch (error) {
+    console.log('<--------------- JK Index Error --------------->');
     console.error('Error generating PDF:', error);
-
     return {
       ok: false,
       s3Key,
