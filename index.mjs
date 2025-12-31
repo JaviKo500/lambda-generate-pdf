@@ -1,4 +1,5 @@
-import chromium  from 'chrome-aws-lambda';
+import puppeteer  from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
@@ -11,10 +12,10 @@ export const handler = async (event) => {
   let s3Key = null;
   let page;
   try {
-    browser = await chromium.puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
@@ -31,6 +32,7 @@ export const handler = async (event) => {
       printBackground: true,
     });
 
+    // todo: get bucket name by country
     s3Key = `giftcards/${orderId}/${fileName}`;
 
     console.log('<--------------- JK Index --------------->');
@@ -59,8 +61,8 @@ export const handler = async (event) => {
     };
   } finally {
     if (browser) {
-      await browser.close();
+      await page?.close();
+      await browser?.close();
     }
-    await page?.close();
   }
 };
